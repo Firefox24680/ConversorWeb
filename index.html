@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor Universal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgb(69, 129, 163);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .categoria-select {
+            width: 100%;
+            padding: 0.8rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .conversion-container {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        input, select {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            flex: 1;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            border-color: #3498db;
+        }
+
+        .resultado {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversor Universal</h1>
+        
+        <select class="categoria-select" id="categoria" onchange="cambiarCategoria()">
+            <option value="longitud">Longitud</option>
+            <option value="masa">Masa</option>
+            <option value="volumen">Volumen</option>
+            <option value="temperatura">Temperatura</option>
+            <option value="tiempo">Tiempo</option>
+            <option value="datos">Datos (Binarios)</option>
+            <option value="energia">Energía</option>
+            <option value="fuerza">Fuerza</option>
+            <option value="velocidad">Velocidad</option>
+            <option value="presion">Presión</option>
+            <option value="potencia">Potencia</option>
+        </select>
+
+        <div class="conversion-container">
+            <input type="number" id="valor-entrada" placeholder="Valor" oninput="convertir()">
+            <select id="unidad-entrada" onchange="convertir()"></select>
+        </div>
+
+        <div class="conversion-container">
+            <input type="number" id="valor-salida" readonly>
+            <select id="unidad-salida" onchange="convertir()"></select>
+        </div>
+    </div>
+
+    <script>
+        const unidades = {
+            longitud: ['Metros', 'Kilómetros', 'Centímetros', 'Milímetros', 'Pulgadas', 'Pies', 'Yardas', 'Millas'],
+            masa: ['Kilogramos', 'Gramos', 'Miligramos', 'Libras', 'Onzas', 'Toneladas'],
+            volumen: ['Litros', 'Mililitros', 'Metros cúbicos', 'Galones', 'Pulgadas cúbicas'],
+            temperatura: ['Celsius', 'Fahrenheit', 'Kelvin'],
+            tiempo: ['Segundos', 'Minutos', 'Horas', 'Días', 'Semanas', 'Meses', 'Años'],
+            datos: ['Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes'],
+            energia: ['Joules', 'Kilojoules', 'Calorías', 'Kilocalorías', 'Vatios-hora', 'Kilovatios-hora'],
+            fuerza: ['Newton', 'Kilonewton', 'Dina', 'Kilogramo-fuerza'],
+            velocidad: ['Metros/segundo', 'Kilómetros/hora', 'Millas/hora', 'Nudos'],
+            presion: ['Pascal', 'Kilopascal', 'Bar', 'Atmósfera', 'PSI'],
+            potencia: ['Vatio', 'Kilovatio', 'Caballo de fuerza', 'BTU/hora']
+        };
+
+        function cambiarCategoria() {
+            const categoria = document.getElementById('categoria').value;
+            const unidadesEntrada = document.getElementById('unidad-entrada');
+            const unidadesSalida = document.getElementById('unidad-salida');
+            
+            unidadesEntrada.innerHTML = '';
+            unidadesSalida.innerHTML = '';
+            
+            unidades[categoria].forEach(unidad => {
+                unidadesEntrada.add(new Option(unidad, unidad));
+                unidadesSalida.add(new Option(unidad, unidad));
+            });
+            
+            convertir();
+        }
+
+        function convertir() {
+            const categoria = document.getElementById('categoria').value;
+            const valorEntrada = parseFloat(document.getElementById('valor-entrada').value);
+            const unidadEntrada = document.getElementById('unidad-entrada').value;
+            const unidadSalida = document.getElementById('unidad-salida').value;
+            
+            if (isNaN(valorEntrada)) {
+                document.getElementById('valor-salida').value = '';
+                return;
+            }
+
+            let resultado;
+            let valorBase = convertirABase(valorEntrada, unidadEntrada, categoria);
+            resultado = convertirDesdeBase(valorBase, unidadSalida, categoria);
+            
+            document.getElementById('valor-salida').value = resultado.toFixed(4);
+        }
+
+        function convertirABase(valor, unidad, categoria) {
+            switch(categoria) {
+                case 'longitud':
+                    switch(unidad) {
+                        case 'Metros': return valor;
+                        case 'Kilómetros': return valor * 1000;
+                        case 'Centímetros': return valor / 100;
+                        case 'Milímetros': return valor / 1000;
+                        case 'Pulgadas': return valor * 0.0254;
+                        case 'Pies': return valor * 0.3048;
+                        case 'Yardas': return valor * 0.9144;
+                        case 'Millas': return valor * 1609.34;
+                    }
+                    break;
+                case 'masa':
+                    switch(unidad) {
+                        case 'Kilogramos': return valor;
+                        case 'Gramos': return valor / 1000;
+                        case 'Miligramos': return valor / 1000000;
+                        case 'Libras': return valor * 0.453592;
+                        case 'Onzas': return valor * 0.0283495;
+                        case 'Toneladas': return valor * 1000;
+                    }
+                    break;
+                case 'volumen':
+                    switch(unidad) {
+                        case 'Litros': return valor;
+                        case 'Mililitros': return valor / 1000;
+                        case 'Metros cúbicos': return valor * 1000;
+                        case 'Galones': return valor * 3.78541;
+                        case 'Pulgadas cúbicas': return valor * 0.0163871;
+                    }
+                    break;
+                case 'temperatura':
+                    switch(unidad) {
+                        case 'Celsius': return valor;
+                        case 'Fahrenheit': return (valor - 32) * 5/9;
+                        case 'Kelvin': return valor - 273.15;
+                    }
+                    break;
+                case 'tiempo':
+                    switch(unidad) {
+                        case 'Segundos': return valor;
+                        case 'Minutos': return valor * 60;
+                        case 'Horas': return valor * 3600;
+                        case 'Días': return valor * 86400;
+                        case 'Semanas': return valor * 604800;
+                        case 'Meses': return valor * 2592000;
+                        case 'Años': return valor * 31536000;
+                    }
+                    break;
+                case 'datos':
+                    switch(unidad) {
+                        case 'Bytes': return valor;
+                        case 'Kilobytes': return valor * 1024;
+                        case 'Megabytes': return valor * 1024 * 1024;
+                        case 'Gigabytes': return valor * 1024 * 1024 * 1024;
+                        case 'Terabytes': return valor * 1024 * 1024 * 1024 * 1024;
+                    }
+                    break;
+                case 'energia':
+                    switch(unidad) {
+                        case 'Joules': return valor;
+                        case 'Kilojoules': return valor * 1000;
+                        case 'Calorías': return valor * 4.184;
+                        case 'Kilocalorías': return valor * 4184;
+                        case 'Vatios-hora': return valor * 3600;
+                        case 'Kilovatios-hora': return valor * 3600000;
+                    }
+                    break;
+                case 'fuerza':
+                    switch(unidad) {
+                        case 'Newton': return valor;
+                        case 'Kilonewton': return valor * 1000;
+                        case 'Dina': return valor * 0.00001;
+                        case 'Kilogramo-fuerza': return valor * 9.80665;
+                    }
+                    break;
+                case 'velocidad':
+                    switch(unidad) {
+                        case 'Metros/segundo': return valor;
+                        case 'Kilómetros/hora': return valor / 3.6;
+                        case 'Millas/hora': return valor * 0.44704;
+                        case 'Nudos': return valor * 0.514444;
+                    }
+                    break;
+                case 'presion':
+                    switch(unidad) {
+                        case 'Pascal': return valor;
+                        case 'Kilopascal': return valor * 1000;
+                        case 'Bar': return valor * 100000;
+                        case 'Atmósfera': return valor * 101325;
+                        case 'PSI': return valor * 6894.76;
+                    }
+                    break;
+                case 'potencia':
+                    switch(unidad) {
+                        case 'Vatio': return valor;
+                        case 'Kilovatio': return valor * 1000;
+                        case 'Caballo de fuerza': return valor * 745.7;
+                        case 'BTU/hora': return valor * 0.29307107;
+                    }
+                    break;
+            }
+            return valor;
+        }
+
+        function convertirDesdeBase(valor, unidad, categoria) {
+            switch(categoria) {
+                case 'longitud':
+                    switch(unidad) {
+                        case 'Metros': return valor;
+                        case 'Kilómetros': return valor / 1000;
+                        case 'Centímetros': return valor * 100;
+                        case 'Milímetros': return valor * 1000;
+                        case 'Pulgadas': return valor / 0.0254;
+                        case 'Pies': return valor / 0.3048;
+                        case 'Yardas': return valor / 0.9144;
+                        case 'Millas': return valor / 1609.34;
+                    }
+                    break;
+                case 'masa':
+                    switch(unidad) {
+                        case 'Kilogramos': return valor;
+                        case 'Gramos': return valor * 1000;
+                        case 'Miligramos': return valor * 1000000;
+                        case 'Libras': return valor / 0.453592;
+                        case 'Onzas': return valor / 0.0283495;
+                        case 'Toneladas': return valor / 1000;
+                    }
+                    break;
+                case 'volumen':
+                    switch(unidad) {
+                        case 'Litros': return valor;
+                        case 'Mililitros': return valor * 1000;
+                        case 'Metros cúbicos': return valor / 1000;
+                        case 'Galones': return valor / 3.78541;
+                        case 'Pulgadas cúbicas': return valor / 0.0163871;
+                    }
+                    break;
+                case 'temperatura':
+                    switch(unidad) {
+                        case 'Celsius': return valor;
+                        case 'Fahrenheit': return (valor * 9/5) + 32;
+                        case 'Kelvin': return valor + 273.15;
+                    }
+                    break;
+                case 'tiempo':
+                    switch(unidad) {
+                        case 'Segundos': return valor;
+                        case 'Minutos': return valor / 60;
+                        case 'Horas': return valor / 3600;
+                        case 'Días': return valor / 86400;
+                        case 'Semanas': return valor / 604800;
+                        case 'Meses': return valor / 2592000;
+                        case 'Años': return valor / 31536000;
+                    }
+                    break;
+                case 'datos':
+                    switch(unidad) {
+                        case 'Bytes': return valor;
+                        case 'Kilobytes': return valor / 1024;
+                        case 'Megabytes': return valor / (1024 * 1024);
+                        case 'Gigabytes': return valor / (1024 * 1024 * 1024);
+                        case 'Terabytes': return valor / (1024 * 1024 * 1024 * 1024);
+                    }
+                    break;
+                case 'energia':
+                    switch(unidad) {
+                        case 'Joules': return valor;
+                        case 'Kilojoules': return valor / 1000;
+                        case 'Calorías': return valor / 4.184;
+                        case 'Kilocalorías': return valor / 4184;
+                        case 'Vatios-hora': return valor / 3600;
+                        case 'Kilovatios-hora': return valor / 3600000;
+                    }
+                    break;
+                case 'fuerza':
+                    switch(unidad) {
+                        case 'Newton': return valor;
+                        case 'Kilonewton': return valor / 1000;
+                        case 'Dina': return valor / 0.00001;
+                        case 'Kilogramo-fuerza': return valor / 9.80665;
+                    }
+                    break;
+                case 'velocidad':
+                    switch(unidad) {
+                        case 'Metros/segundo': return valor;
+                        case 'Kilómetros/hora': return valor * 3.6;
+                        case 'Millas/hora': return valor / 0.44704;
+                        case 'Nudos': return valor / 0.514444;
+                    }
+                    break;
+                case 'presion':
+                    switch(unidad) {
+                        case 'Pascal': return valor;
+                        case 'Kilopascal': return valor / 1000;
+                        case 'Bar': return valor / 100000;
+                        case 'Atmósfera': return valor / 101325;
+                        case 'PSI': return valor / 6894.76;
+                    }
+                    break;
+                case 'potencia':
+                    switch(unidad) {
+                        case 'Vatio': return valor;
+                        case 'Kilovatio': return valor / 1000;
+                        case 'Caballo de fuerza': return valor / 745.7;
+                        case 'BTU/hora': return valor / 0.29307107;
+                    }
+                    break;
+            }
+            return valor;
+        }
+
+        // Inicializar la página
+        cambiarCategoria();
+    </script>
+</body>
+</html>
